@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:isar/isar.dart';
+import 'package:isar_watcher/collections/audit.dart';
 import 'package:isar_watcher/collections/meal.dart';
 import 'package:isar_watcher/db/isar_manager.dart';
 
@@ -31,6 +32,17 @@ class _IsarProviderState extends State<IsarProvider> {
       if (oldMeals.length == updatedMeals.length) {
         updatedMeals.asMap().entries.map((entry) {
           if (entry.value.label != oldMeals[entry.key].label) {
+            final audit = Audit(
+              mealId: entry.value.id,
+              userAcceptedLabel: entry.value.label,
+              predictedLabel: entry.value.prediction.value!.label,
+              predictionId: entry.value.prediction.value!.id,
+            );
+
+            _isar.writeTxn(() async {
+              await _isar.audits.put(audit);
+            });
+
             print(
                 "label changed! ${entry.value.prediction.value!.label} -> ${entry.value.label}");
           }
